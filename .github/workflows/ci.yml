@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Corre los tests en cada push/PR. El despliegue lo hace GitHub Pages
+# directo desde la rama master (Settings > Pages > Deploy from a branch),
+# así que este pipeline solo valida calidad (no despliega).
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test
