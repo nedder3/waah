@@ -25,12 +25,20 @@ Todos los servicios son clases puras sobre `StorageAdapter` y se registran en
 `main.js` con su vista. La UI es un shell con tabs.
 
 ## Arquitectura de UI
+- **Feature-modules:** cada servicio vive en `src/services/<id>/` con su
+  `index.js` que exporta `{ id, name, description, ServiceClass, render }`.
+  `src/services/index.js` agrega `SERVICES = [s3, store, iam, lambda, ec2]`.
+  Añadir un servicio = crear la carpeta + una línea en `SERVICES`; nada más.
+- `main.js` recorre `SERVICES` y registra cada uno en el `ServiceRegistry`.
+  No tiene imports por servicio ni llamadas `bind` repetidas.
 - `app.js` es un **shell con tabs** que NO conoce servicios específicos: lee
   `registry.list()` para pintar un tab por servicio y `registry.create(id, adapter)`
-  + `def.render` para montar la vista. Añadir un servicio = registrarlo en
-  `main.js`; la UI lo toma sola. El `ServiceRegistry` es la única fuente.
-- `main.js` registra servicios (factory + namespace de storage + `render`) en el
-  registry; ya no hay mapas paralelos de instancias ni de vistas.
+  + `def.render` para montar la vista. El `ServiceRegistry` es la única fuente.
+- **Helper de vista:** `src/ui/crud-view.js` (`renderCrudView`) renderiza la
+  forma común (form + lista + delete + empty state) desde una config. Las 5
+  vistas (`*-view.js`) son finas: llaman al helper para la lista principal y
+  agregan el sub-panel específico (objetos S3, items Store, roles IAM,
+  invocación Lambda, start/stop EC2) vía `rowActions` / `onChange` / `onReady`.
 - Cada vista es la única que toca el DOM de su servicio; los servicios siguen
   siendo clases puras y testeables sin navegador.
 

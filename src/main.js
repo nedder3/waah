@@ -1,36 +1,21 @@
-// Entry point: wires storage + registry + services + views.
+// Entry point: wires the service catalog + registry + UI shell.
 import { ServiceRegistry } from './core/registry.js';
-import { S3Service } from './services/s3/s3.js';
-import { StoreService } from './services/store/store.js';
-import { IamService } from './services/iam/iam.js';
-import { LambdaService } from './services/lambda/lambda.js';
-import { Ec2Service } from './services/ec2/ec2.js';
-import { renderS3View } from './ui/s3-view.js';
-import { renderStoreView } from './ui/store-view.js';
-import { renderIamView } from './ui/iam-view.js';
-import { renderLambdaView } from './ui/lambda-view.js';
-import { renderEc2View } from './ui/ec2-view.js';
 import { mountApp } from './ui/app.js';
+import { SERVICES } from './services/index.js';
 
 const registry = new ServiceRegistry();
 
-// Each registration carries the service factory plus its UI render fn.
-// The shell instantiates the service with its own storage adapter namespace.
-function bind(id, name, description, ServiceClass, render) {
+// One registration per service in the catalog. The registry becomes the single
+// source of truth the UI reads from — no service-specific code lives here.
+for (const svc of SERVICES) {
   registry.register({
-    id,
-    name,
-    description,
-    factory: (adapter) => new ServiceClass(adapter),
-    render,
+    id: svc.id,
+    name: svc.name,
+    description: svc.description,
+    factory: (adapter) => new svc.ServiceClass(adapter),
+    render: svc.render,
   });
 }
-
-bind('s3', 'S3-like', 'Buckets y objetos', S3Service, renderS3View);
-bind('store', 'Store', 'Tablas key-value (Dynamo-like)', StoreService, renderStoreView);
-bind('iam', 'IAM', 'Usuarios, roles y policies', IamService, renderIamView);
-bind('lambda', 'Lambda', 'Funciones y ejecución', LambdaService, renderLambdaView);
-bind('ec2', 'EC2', 'Instancias virtuales', Ec2Service, renderEc2View);
 
 const root = document.getElementById('app');
 mountApp(root, { registry });

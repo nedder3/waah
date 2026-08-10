@@ -1,101 +1,77 @@
-// S3 view: renders the S3-like service into a container element.
-// Receives the service instance (already constructed with its adapter).
+// S3 view: buckets + objects, built on the shared CRUD helper.
+// The helper renders the bucket list (create/delete). Clicking a bucket opens an
+// object panel (upload text object + list objects by prefix) managed by this view.
+import { renderCrudView } from './crud-view.js';
+
 export function renderS3View(container, s3) {
-  container.innerHTML = `
-    <h2>Buckets (S3-like)</h2>
-    <form id="s3-create-bucket">
-      <input id="s3-bucket-name" placeholder="nombre-del-bucket" />
-      <button type="submit">Crear bucket</button>
-    </form>
-    <ul id="s3-bucket-list"></ul>
-    <section id="s3-objects" hidden>
-      <h3 id="s3-objects-title"></h3>
-      <form id="s3-put-object">
-        <input id="s3-object-key" placeholder="ruta/objeto.txt" />
-        <textarea id="s3-object-body" placeholder="contenido"></textarea>
-        <button type="submit">Subir objeto</button>
-      </form>
-      <ul id="s3-object-list"></ul>
-    </section>
-    <pre id="s3-log" aria-live="polite"></pre>
-  `;
+  let openBucket = null;
 
-  const $ = (sel) => container.querySelector(sel);
-  const log = (msg) => { $('#s3-log').textContent += `${msg}\n`; };
-
-  function renderBuckets() {
-    const ul = $('#s3-bucket-list');
+  function renderObjects() {
+    const panel = container.querySelector('#s3-objects');
+    if (!openBucket) { panel.hidden = true; return; }
+    panel.hidden = false;
+    container.querySelector('#s3-objects-title').textContent = `Objetos en ${openBucket}`;
+    const ul = container.querySelector('#s3-object-list');
     ul.innerHTML = '';
-    for (const name of s3.listBuckets()) {
+    for (const obj of s3.listObjects(openBucket)) {
       const li = document.createElement('li');
-      const btn = document.createElement('button');
-      btn.textContent = name;
-      btn.addEventListener('click', () => openBucket(name));
-      const del = document.createElement('button');
-      del.textContent = '🗑';
-      del.addEventListener('click', () => {
-        s3.deleteBucket(name);
-        renderBuckets();
-        $('#s3-objects').hidden = true;
-      });
-      li.append(btn, del);
-      ul.append(li);
-    }
-  }
-
-  function openBucket(name) {
-    $('#s3-objects').hidden = false;
-    $('#s3-objects-title').textContent = `Objetos en ${name}`;
-    renderObjects(name);
-  }
-
-  function renderObjects(bucket) {
-    const ul = $('#s3-object-list');
-    ul.innerHTML = '';
-    for (const obj of s3.listObjects(bucket)) {
-      const li = document.createElement('li');
-      const view = document.createElement('button');
+      const view = document.createElement('span');
       view.textContent = `${obj.key} → ${obj.body.slice(0, 24)}`;
-      view.addEventListener('click', () => log(`${bucket}/${obj.key}: ${obj.body}`));
       const del = document.createElement('button');
+      del.className = 'del';
       del.textContent = '🗑';
-      del.addEventListener('click', () => {
-        s3.deleteObject(bucket, obj.key);
-        renderObjects(bucket);
-      });
+      del.addEventListener('click', () => { s3.deleteObject(openBucket, obj.key); renderObjects(); });
       li.append(view, del);
       ul.append(li);
     }
   }
 
-  $('#s3-create-bucket').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = $('#s3-bucket-name').value.trim().toLowerCase();
-    if (!name) return;
-    try {
-      s3.createBucket(name);
-      $('#s3-bucket-name').value = '';
-      renderBuckets();
-    } catch (err) {
-      log(`error: ${err.message}`);
-    }
+  renderCrudView(container, {
+    title: 'S3 — Buckets',
+    formId: 's3',
+    submitLabel: 'Crear bucket',
+    fields: [{ name: 'name', placeholder: 'nombre-del-bucket' }],
+    create: (vals) => s3.createBucket(vals.name),
+    list: () => s3.listBuckets().map((n) => ({ key: n, label: n })),
+    onDelete: (n) => { if (openBucket === n) openBucket = null; s3.deleteBucket(n); },
+    emptyText: 'Sin buckets.',
+    rowActions: (item, refresh) => [{
+      label: 'abrir',
+      onClick: () => { openBucket = item.key; renderObjects(); },
+    }],
+    onChange: () => renderObjects(),
   });
 
-  $('#s3-put-object').addEventListener('submit', (e) => {
+  const helper = container.querySelector('.crud-log');
+  const panel = document.createElement('section');
+  panel.id = 's3-objects';
+  panel.hidden = true;
+  panel.innerHTML = `
+    <h4 id="s3-objects-title"></h4>
+    <form id="s3-put-object">
+      <input id="s3-object-key" placeholder="ruta/objeto.txt" />
+      <textarea id="s3-object-body" placeholder="contenido"></textarea>
+      <button type="submit">Subir objeto</button>
+    </form>
+    <ul id="s3-object-list"></ul>
+  `;
+  container.insertBefore(panel, helper);
+
+  panel.querySelector('#s3-put-object').addEventListener('submit', (e) => {
     e.preventDefault();
-    const bucket = $('#s3-objects-title').textContent.replace('Objetos en ', '');
-    const key = $('#s3-object-key').value.trim();
-    const body = $('#s3-object-body').value;
+    if (!openBucket) return;
+    const key = panel.querySelector('#s3-object-key').value.trim();
+    const body = panel.querySelector('#s3-object-body').value;
     if (!key) return;
     try {
-      s3.putObject(bucket, key, body);
-      $('#s3-object-key').value = '';
-      $('#s3-object-body').value = '';
-      renderObjects(bucket);
+      s3.putObject(openBucket, key, body);
+      panel.querySelector('#s3-object-key').value = '';
+      panel.querySelector('#s3-object-body').value = '';
+      renderObjects();
     } catch (err) {
-      log(`error: ${err.message}`);
+      helper.textContent += `error: ${err.message}\n`;
     }
   });
 
-  renderBuckets();
+  renderObjects();
 }

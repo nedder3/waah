@@ -1,106 +1,79 @@
-// Store view: renders the Dynamo-like service into a container element.
+// Store view: tables + items, built on the shared CRUD helper.
+// The helper renders the table list (create/delete). Clicking a table opens an
+// item panel (insert JSON item + list items) managed by this view.
+import { renderCrudView } from './crud-view.js';
+
 export function renderStoreView(container, store) {
-  container.innerHTML = `
-    <h2>Tables (Store / Dynamo-like)</h2>
-    <form id="store-create-table">
-      <input id="store-table-name" placeholder="nombre-tabla" />
-      <input id="store-key-field" placeholder="campo-clave (pkey)" value="id" />
-      <button type="submit">Crear tabla</button>
-    </form>
-    <ul id="store-table-list"></ul>
-    <section id="store-items" hidden>
-      <h3 id="store-items-title"></h3>
-      <form id="store-put-item">
-        <textarea id="store-item-json" placeholder='{"id":"1","nombre":"ana"}'></textarea>
-        <button type="submit">Insertar item</button>
-      </form>
-      <ul id="store-item-list"></ul>
-    </section>
-    <pre id="store-log" aria-live="polite"></pre>
-  `;
+  let openTable = null;
 
-  const $ = (sel) => container.querySelector(sel);
-  const log = (msg) => { $('#store-log').textContent += `${msg}\n`; };
-
-  function renderTables() {
-    const ul = $('#store-table-list');
+  function renderItemPanel() {
+    const panel = container.querySelector('#store-items');
+    if (!openTable) { panel.hidden = true; return; }
+    panel.hidden = false;
+    container.querySelector('#store-items-title').textContent = `Items en ${openTable}`;
+    const ul = container.querySelector('#store-item-list');
     ul.innerHTML = '';
-    for (const name of store.listTables()) {
+    const kf = store.keyFieldOf(openTable);
+    for (const item of store.query(openTable)) {
       const li = document.createElement('li');
-      const btn = document.createElement('button');
-      btn.textContent = name;
-      btn.addEventListener('click', () => openTable(name));
-      const del = document.createElement('button');
-      del.textContent = '🗑';
-      del.addEventListener('click', () => {
-        store.deleteTable(name);
-        renderTables();
-        $('#store-items').hidden = true;
-      });
-      li.append(btn, del);
-      ul.append(li);
-    }
-  }
-
-  function openTable(name) {
-    $('#store-items').hidden = false;
-    $('#store-items-title').textContent = `Items en ${name}`;
-    renderItems(name);
-  }
-
-  function renderItems(table) {
-    const ul = $('#store-item-list');
-    ul.innerHTML = '';
-    const kf = store.keyFieldOf(table);
-    for (const item of store.query(table)) {
-      const li = document.createElement('li');
-      const view = document.createElement('button');
+      const view = document.createElement('span');
       view.textContent = JSON.stringify(item).slice(0, 48);
       const del = document.createElement('button');
+      del.className = 'del';
       del.textContent = '🗑';
-      del.addEventListener('click', () => {
-        store.deleteItem(table, String(item[kf]));
-        renderItems(table);
-      });
+      del.addEventListener('click', () => { store.deleteItem(openTable, String(item[kf])); renderItemPanel(); });
       li.append(view, del);
       ul.append(li);
     }
   }
 
-  function storeKeyField(table) {
-    // Read the partition key name from table metadata via the service.
-    const raw = store._tableMeta(table);
-    return raw.keyField;
-  }
-
-  $('#store-create-table').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = $('#store-table-name').value.trim().toLowerCase();
-    const keyField = $('#store-key-field').value.trim();
-    if (!name || !keyField) return;
-    try {
-      store.createTable(name, keyField);
-      $('#store-table-name').value = '';
-      renderTables();
-    } catch (err) {
-      log(`error: ${err.message}`);
-    }
+  renderCrudView(container, {
+    title: 'Store — Tablas',
+    formId: 'store',
+    submitLabel: 'Crear tabla',
+    fields: [
+      { name: 'name', placeholder: 'nombre-tabla' },
+      { name: 'keyField', placeholder: 'campo-clave (pkey)', value: 'id' },
+    ],
+    create: (vals) => store.createTable(vals.name, vals.keyField),
+    list: () => store.listTables().map((n) => ({ key: n, label: n })),
+    onDelete: (n) => { if (openTable === n) openTable = null; store.deleteTable(n); },
+    emptyText: 'Sin tablas.',
+    rowActions: (item, refresh) => [{
+      label: 'abrir',
+      onClick: () => { openTable = item.key; renderItemPanel(); },
+    }],
+    onChange: () => renderItemPanel(),
   });
 
-  $('#store-put-item').addEventListener('submit', (e) => {
+  const helper = container.querySelector('.crud-log');
+  const panel = document.createElement('section');
+  panel.id = 'store-items';
+  panel.hidden = true;
+  panel.innerHTML = `
+    <h4 id="store-items-title"></h4>
+    <form id="store-put-item">
+      <textarea id="store-item-json" placeholder='{"id":"1","nombre":"ana"}'></textarea>
+      <button type="submit">Insertar item</button>
+    </form>
+    <ul id="store-item-list"></ul>
+  `;
+  container.insertBefore(panel, helper);
+
+  panel.querySelector('#store-put-item').addEventListener('submit', (e) => {
     e.preventDefault();
-    const table = $('#store-items-title').textContent.replace('Items en ', '');
-    const text = $('#store-item-json').value.trim();
+    if (!openTable) return;
+    const text = panel.querySelector('#store-item-json').value.trim();
     if (!text) return;
     try {
       const item = JSON.parse(text);
-      store.putItem(table, item);
-      $('#store-item-json').value = '';
-      renderItems(table);
+      store.putItem(openTable, item);
+      panel.querySelector('#store-item-json').value = '';
+      renderItemPanel();
     } catch (err) {
-      log(`error: ${err.message}`);
+      helper.textContent += `error: ${err.message}\n`;
     }
   });
 
-  renderTables();
+  renderItemPanel();
 }

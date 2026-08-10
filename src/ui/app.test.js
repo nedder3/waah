@@ -38,14 +38,14 @@ describe('UI shell (jsdom)', () => {
     expect(tabs.length).toBe(5);
     expect(tabs[0].classList.contains('active')).toBe(true);
     // First service (s3) view rendered.
-    expect(root.querySelector('#s3-bucket-list')).not.toBeNull();
+    expect(root.querySelector('#s3-list')).not.toBeNull();
   });
 
   it('renders one tab per registered service (5) and activates the first', () => {
     const registry = makeRegistry();
     mountApp(root, { registry });
     expect(root.querySelectorAll('#tabs button').length).toBe(5);
-    expect(root.querySelector('#s3-bucket-list')).not.toBeNull();
+    expect(root.querySelector('#s3-list')).not.toBeNull();
   });
 
   it('switches to each service view on tab click', () => {
@@ -53,11 +53,11 @@ describe('UI shell (jsdom)', () => {
     mountApp(root, { registry });
     const click = (name) => [...root.querySelectorAll('#tabs button')].find((b) => b.textContent === name).click();
     click('Store');
-    expect(root.querySelector('#store-table-list')).not.toBeNull();
+    expect(root.querySelector('#store-list')).not.toBeNull();
     click('IAM');
     expect(root.querySelector('#iam-user-list')).not.toBeNull();
     click('Lambda');
-    expect(root.querySelector('#lambda-fn-list')).not.toBeNull();
+    expect(root.querySelector('#lambda-list')).not.toBeNull();
     click('EC2');
     expect(root.querySelector('#ec2-list')).not.toBeNull();
   });
@@ -65,11 +65,11 @@ describe('UI shell (jsdom)', () => {
   it('end-to-end: create bucket via S3 view reflects in the rendered list', () => {
     const registry = makeRegistry();
     mountApp(root, { registry });
-    const input = root.querySelector('#s3-bucket-name');
+    const input = root.querySelector('#s3-name');
     input.value = 'demo';
-    root.querySelector('#s3-create-bucket').dispatchEvent(new Event('submit', { cancelable: true }));
+    root.querySelector('#s3').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
     // The UI re-renders from the same service instance it created, so the new
     // bucket shows up in the DOM — that is the observable contract.
-    expect([...root.querySelectorAll('#s3-bucket-list li button')].some((b) => b.textContent === 'demo')).toBe(true);
+    expect([...root.querySelectorAll('#s3-list li span')].some((s) => s.textContent === 'demo')).toBe(true);
   });
 });

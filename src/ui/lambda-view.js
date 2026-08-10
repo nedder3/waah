@@ -1,76 +1,72 @@
-// Lambda view: functions + invocation log. Receives the service instance.
+// Lambda view: functions + invocation log, built on the shared CRUD helper.
+// The helper renders the function list (create/delete). Clicking a function
+// opens an invocation panel (textarea + history) managed by this view.
+import { renderCrudView } from './crud-view.js';
+
 export function renderLambdaView(container, lambda) {
-  container.innerHTML = `
-    <h2>Lambda</h2>
-    <form id="lambda-create-fn">
-      <input id="lambda-fn-name" placeholder="nombre-fn" />
-      <input id="lambda-fn-runtime" placeholder="runtime" value="node18" />
-      <button type="submit">Crear función</button>
-    </form>
-    <ul id="lambda-fn-list"></ul>
-    <section id="lambda-invoke" hidden>
-      <h3 id="lambda-invoke-title"></h3>
-      <form id="lambda-invoke-form">
-        <textarea id="lambda-input" placeholder='{"input":"hola"}'></textarea>
-        <button type="submit">Invocar</button>
-      </form>
-      <ul id="lambda-inv-list"></ul>
-    </section>
-    <pre id="lambda-log" aria-live="polite"></pre>
-  `;
+  let openFn = null;
 
-  const $ = (sel) => container.querySelector(sel);
-  const log = (m) => { $('#lambda-log').textContent += `${m}\n`; };
-
-  function renderFns() {
-    const ul = $('#lambda-fn-list'); ul.innerHTML = '';
-    for (const name of lambda.listFunctions()) {
-      const li = document.createElement('li');
-      const btn = document.createElement('button');
-      btn.textContent = `${name} (${lambda.getFunction(name).runtime})`;
-      btn.addEventListener('click', () => openFn(name));
-      const del = document.createElement('button'); del.textContent = '🗑';
-      del.addEventListener('click', () => { lambda.deleteFunction(name); renderFns(); $('#lambda-invoke').hidden = true; });
-      li.append(btn, del); ul.append(li);
-    }
-  }
-
-  function openFn(name) {
-    $('#lambda-invoke').hidden = false;
-    $('#lambda-invoke-title').textContent = `Invocar ${name}`;
-    renderInvs(name);
-  }
-
-  function renderInvs(name) {
-    const ul = $('#lambda-inv-list'); ul.innerHTML = '';
-    for (const rec of lambda.invocationsOf(name)) {
+  function renderInvokePanel() {
+    const panel = container.querySelector('#lambda-invoke');
+    if (!openFn) { panel.hidden = true; return; }
+    panel.hidden = false;
+    container.querySelector('#lambda-invoke-title').textContent = `Invocar ${openFn}`;
+    const ul = container.querySelector('#lambda-inv-list');
+    ul.innerHTML = '';
+    for (const rec of lambda.invocationsOf(openFn)) {
       const li = document.createElement('li');
       li.textContent = `${rec.requestId}: ${JSON.stringify(rec.input)} → ${rec.status}`;
       ul.append(li);
     }
   }
 
-  $('#lambda-create-fn').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const n = $('#lambda-fn-name').value.trim().toLowerCase();
-    const rt = $('#lambda-fn-runtime').value.trim();
-    if (!n || !rt) return;
-    try { lambda.createFunction(n, rt); $('#lambda-fn-name').value = ''; renderFns(); }
-    catch (err) { log(`error: ${err.message}`); }
+  renderCrudView(container, {
+    title: 'Lambda — Funciones',
+    formId: 'lambda',
+    submitLabel: 'Crear función',
+    fields: [
+      { name: 'name', placeholder: 'nombre-fn' },
+      { name: 'runtime', placeholder: 'runtime', value: 'node18' },
+    ],
+    create: (vals) => lambda.createFunction(vals.name, vals.runtime),
+    list: () => lambda.listFunctions().map((n) => ({ key: n, label: `${n} (${lambda.getFunction(n).runtime})` })),
+    onDelete: (n) => { if (openFn === n) openFn = null; lambda.deleteFunction(n); },
+    emptyText: 'Sin funciones.',
+    rowActions: (item, refresh) => [{
+      label: 'abrir',
+      onClick: () => { openFn = item.key; renderInvokePanel(); },
+    }],
+    onChange: () => renderInvokePanel(),
   });
 
-  $('#lambda-invoke-form').addEventListener('submit', (e) => {
+  // Invocation panel lives below the helper's output.
+  const helper = container.querySelector('.crud-log');
+  const panel = document.createElement('section');
+  panel.id = 'lambda-invoke';
+  panel.hidden = true;
+  panel.innerHTML = `
+    <h4 id="lambda-invoke-title"></h4>
+    <form id="lambda-invoke-form">
+      <textarea id="lambda-input" placeholder='{"input":"hola"}'></textarea>
+      <button type="submit">Invocar</button>
+    </form>
+    <ul id="lambda-inv-list"></ul>
+  `;
+  container.insertBefore(panel, helper);
+
+  panel.querySelector('#lambda-invoke-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = $('#lambda-invoke-title').textContent.replace('Invocar ', '');
-    const text = $('#lambda-input').value.trim() || '{}';
+    if (!openFn) return;
+    const text = panel.querySelector('#lambda-input').value.trim() || '{}';
     try {
       const input = JSON.parse(text);
-      const res = lambda.invoke(name, input);
-      $('#lambda-input').value = '';
-      log(`→ ${res.requestId}`);
-      renderInvs(name);
-    } catch (err) { log(`error: ${err.message}`); }
+      lambda.invoke(openFn, input);
+      panel.querySelector('#lambda-input').value = '';
+      renderInvokePanel();
+    } catch (err) {
+      helper.textContent += `error: ${err.message}\n`;
+    }
   });
 
-  renderFns();
+  renderInvokePanel();
 }
