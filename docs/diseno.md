@@ -17,9 +17,12 @@ GitHub Pages, sin backend ni build.
 ## Servicios planeados
 1. S3-like (buckets + objetos) — **hecho**.
 2. Store (Dynamo-like) — **hecho** (tablas con partition key, items JSON).
-3. IAM-like.
-4. Lambda-like.
-5. EC2-like.
+3. IAM-like — **hecho** (usuarios, roles, policies, attach/detach).
+4. Lambda-like — **hecho** (funciones + log de invocación simulado).
+5. EC2-like — **hecho** (instancias con ciclo de vida running/stopped/terminated).
+
+Todos los servicios son clases puras sobre `StorageAdapter` y se registran en
+`main.js` con su vista. La UI es un shell con tabs.
 
 ## Arquitectura de UI
 - `app.js` es un **shell con tabs**: un tab por servicio registrado; cada servicio

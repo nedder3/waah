@@ -3,16 +3,25 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ServiceRegistry } from '../core/registry.js';
 import { S3Service } from '../services/s3/s3.js';
 import { StoreService } from '../services/store/store.js';
+import { IamService } from '../services/iam/iam.js';
+import { LambdaService } from '../services/lambda/lambda.js';
+import { Ec2Service } from '../services/ec2/ec2.js';
 import { MemoryAdapter } from '../core/storage.js';
 import { renderS3View } from './s3-view.js';
 import { renderStoreView } from './store-view.js';
+import { renderIamView } from './iam-view.js';
+import { renderLambdaView } from './lambda-view.js';
+import { renderEc2View } from './ec2-view.js';
 import { mountApp } from './app.js';
 
 function makeServices() {
   const registry = new ServiceRegistry();
   registry.register({ id: 's3', name: 'S3-like', description: '', factory: (a) => new S3Service(a), render: renderS3View });
   registry.register({ id: 'store', name: 'Store', description: '', factory: (a) => new StoreService(a), render: renderStoreView });
-  const renders = { s3: renderS3View, store: renderStoreView };
+  registry.register({ id: 'iam', name: 'IAM', description: '', factory: (a) => new IamService(a), render: renderIamView });
+  registry.register({ id: 'lambda', name: 'Lambda', description: '', factory: (a) => new LambdaService(a), render: renderLambdaView });
+  registry.register({ id: 'ec2', name: 'EC2', description: '', factory: (a) => new Ec2Service(a), render: renderEc2View });
+  const renders = { s3: renderS3View, store: renderStoreView, iam: renderIamView, lambda: renderLambdaView, ec2: renderEc2View };
   const services = {};
   for (const def of registry.list()) {
     const adapter = new MemoryAdapter(def.id);
@@ -32,19 +41,31 @@ describe('UI shell (jsdom)', () => {
     const { registry, services } = makeServices();
     mountApp(root, { registry, services });
     const tabs = root.querySelectorAll('#tabs button');
-    expect(tabs.length).toBe(2);
+    expect(tabs.length).toBe(5);
     expect(tabs[0].classList.contains('active')).toBe(true);
     // First service (s3) view rendered.
     expect(root.querySelector('#s3-bucket-list')).not.toBeNull();
   });
 
-  it('switches views when a tab is clicked', () => {
+  it('renders one tab per registered service (5) and activates the first', () => {
     const { registry, services } = makeServices();
     mountApp(root, { registry, services });
-    const storeTab = [...root.querySelectorAll('#tabs button')].find((b) => b.textContent === 'Store');
-    storeTab.click();
+    expect(root.querySelectorAll('#tabs button').length).toBe(5);
+    expect(root.querySelector('#s3-bucket-list')).not.toBeNull();
+  });
+
+  it('switches to each service view on tab click', () => {
+    const { registry, services } = makeServices();
+    mountApp(root, { registry, services });
+    const click = (name) => [...root.querySelectorAll('#tabs button')].find((b) => b.textContent === name).click();
+    click('Store');
     expect(root.querySelector('#store-table-list')).not.toBeNull();
-    expect(root.querySelector('#s3-bucket-list')).toBeNull();
+    click('IAM');
+    expect(root.querySelector('#iam-user-list')).not.toBeNull();
+    click('Lambda');
+    expect(root.querySelector('#lambda-fn-list')).not.toBeNull();
+    click('EC2');
+    expect(root.querySelector('#ec2-list')).not.toBeNull();
   });
 
   it('end-to-end: create bucket via S3 view reflects in service state', () => {
