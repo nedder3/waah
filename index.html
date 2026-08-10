@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAHH — We Have AWS At Home</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1115; color: #e6e6e6; }
+    header { padding: 1rem 1.5rem; border-bottom: 1px solid #222; }
+    header h1 small { color: #7aa2f7; font-weight: 400; }
+    nav { margin-top: .5rem; display: flex; gap: .75rem; }
+    nav span { background: #1a1d24; padding: .25rem .6rem; border-radius: 6px; font-size: .85rem; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 1.5rem; }
+    @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
+    section { background: #161922; padding: 1rem; border-radius: 10px; }
+    form { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; }
+    input, textarea, button { font: inherit; padding: .4rem .6rem; border-radius: 6px; border: 1px solid #2a2f3a; background: #0f1218; color: #e6e6e6; }
+    button { cursor: pointer; background: #243049; border-color: #34507a; }
+    button:hover { background: #2c3a59; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; gap: .5rem; align-items: center; padding: .3rem 0; border-bottom: 1px solid #202531; }
+    #log { margin: 1.5rem; padding: 1rem; background: #0b0d12; border-radius: 8px; white-space: pre-wrap; font-size: .8rem; color: #9aa; max-height: 200px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

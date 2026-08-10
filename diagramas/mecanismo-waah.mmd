@@ -1,0 +1,16 @@
+%% WAHH — diagrama de mecanismo (no de caja). Regla: mostrar flujo, no organigrama.
+%% Cómo viaja una acción del usuario hasta el storage.
+
+flowchart TD
+  U[Usuario en navegador] -->|click/submit| DOM[UI app.js: única capa DOM]
+  DOM -->|registry.create 's3', adapter| SVC[S3Service: lógica pura]
+  SVC -->|assertBucket / putObject| AD[STorageAdapter: interfaz]
+  AD -->|LocalStorageAdapter runtime| LS[(localStorage: ns:s3:...)]
+  AD -->|MemoryAdapter tests| MEM[(Map en memoria)]
+  SVC -->|retorna resultado| DOM
+  DOM -->|render listas / log| U
+
+  subgraph despliegue[GitHub Pages]
+    STATIC[index.html + src/*.js ESM] -->|sin build| BROWSER[navegador carga módulos]
+  end
+  BROWSER --> U
