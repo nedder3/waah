@@ -1,5 +1,7 @@
 # WAHH — *We Have AWS At Home*
 
+![WAHH — We Have AWS At Home](docs/banner.png)
+
 > Un emulador de servicios de AWS que corre **100% en tu navegador**, sin servidor, sin Docker y sin tarjeta de crédito. Pensado para aprender AWS tocando los conceptos de verdad, no solo leyendo.
 
 ---
