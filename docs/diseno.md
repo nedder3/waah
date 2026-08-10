@@ -15,11 +15,19 @@ GitHub Pages, sin backend ni build.
   enumera en lugar de hardcodear.
 
 ## Servicios planeados
-1. S3-like (buckets + objetos) — **hecho en MVP**.
-2. Store (Dynamo-like).
+1. S3-like (buckets + objetos) — **hecho**.
+2. Store (Dynamo-like) — **hecho** (tablas con partition key, items JSON).
 3. IAM-like.
 4. Lambda-like.
 5. EC2-like.
+
+## Arquitectura de UI
+- `app.js` es un **shell con tabs**: un tab por servicio registrado; cada servicio
+  aporta su propia vista (`*-view.js`). El shell solo maneja el switch de tabs.
+- `main.js` registra servicios (factory + namespace de storage) y sus vistas; no
+  hay lógica de servicio en la UI.
+- Cada vista es la única que toca el DOM de su servicio; los servicios siguen
+  siendo clases puras y testeables sin navegador.
 
 ## TDD / verificación
 - Tests con Vitest (`npx vitest run`).
