@@ -1,74 +1,104 @@
-# WAHH — We Have AWS At Home
+# WAHH — *We Have AWS At Home*
 
-[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/richardlitt/standard-readme)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
-[![deploy](https://img.shields.io/badge/deploy-GitHub%20Pages-2ea44f?style=flat-square)](https://nedder3.github.io/waah/)
-[![tests](https://img.shields.io/badge/tests-vitest-15c213?style=flat-square)](https://vitest.dev/)
+> Un emulador de servicios de AWS que corre **100% en tu navegador**, sin servidor, sin Docker y sin tarjeta de crédito. Pensado para aprender AWS tocando los conceptos de verdad, no solo leyendo.
 
-> Emulador client-side de servicios de AWS, ejecutado íntegramente en el navegador. "We have AWS at home": simula S3, un store de objetos y más, sin backend ni base de datos.
+---
 
-## Tabla de contenidos
+## ¿Qué es AWS y por qué emularlo?
 
-- [Background](#background)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Arquitectura y diagramas](#arquitectura-y-diagramas)
-- [Contribuir](#contribuir)
-- [Licencia](#licencia)
+Amazon Web Services (AWS) es la nube más usada del mundo: guardás archivos (S3),
+corriendo bases de datos (DynamoDB), máquinas virtuales (EC2), funciones que
+responden a eventos (Lambda) y controlás quién puede hacer qué (IAM).
 
-## Background
+El problema para quien arranca: abrir una cuenta real implica configurar
+facturación, regiones, roles y mucho jargon. **WAHH te deja practicar la
+*forma de pensar* de AWS** — buckets, tablas, instancias, funciones, permisos —
+en una maqueta client-side que vive en tu propio navegador.
 
-Inspirado en [`floci`](https://github.com/nedder3/floci) (emulador local de AWS, Java/Maven/Docker), pero **reimplementado en JS puro** como prototipo de viabilidad. El objetivo es validar la idea siendo 100% client-side: todo corre en el browser, la persistencia es `localStorage`/JSON en memoria, y el deploy es GitHub Pages sin build.
+No es un clon de AWS. Es un **prototipo didáctico**: la lógica es la misma
+(creás un bucket, subís un objeto, lo listás), pero la implementación es JS
+puro y la "persistencia" es tu `localStorage`.
 
-Decisiones de diseño:
-- Sin backend, sin Docker, sin base de datos.
-- Stack ligero: JS vanilla (ES modules) + Vitest para TDD.
-- Si el prototipo demuestra valor, se migra al stack pertinente.
+---
 
-## Instalación
+## Cómo correr WAHH sin Docker
 
-No requiere build. Para desarrollar en local:
+No necesitás Docker ni nada instalado para lo básico:
+
+**Opción A — solo abrir el archivo**
+Abrí `index.html` en tu navegador (doble click). Como el proyecto usa módulos
+ESM nativos del navegador, algunos navegadores bloquean `file://`. Si ves errores,
+usá la Opción B.
+
+**Opción B — servidor de desarrollo local (recomendada)**
+Necesitás [Node.js](https://nodejs.org) (v18+). En la carpeta del proyecto:
 
 ```bash
-git clone https://github.com/nedder3/waah.git
-cd waah
 npm install
-npm run dev        # sirve con server.mjs (node)
+npm run dev
 ```
 
-Para ver el prototipo: abrir `index.html` (o el server de dev) en el navegador.
+Luego abrís `http://localhost:5173`. Eso levanta un servidor estático que sirve
+el `index.html` y los módulos `src/`. **Nada se manda a ningún servidor**:
+todo corre y se guarda en tu navegador.
 
-## Uso
+> ¿Y el deploy? El repo está pensado para GitHub Pages. Mientras tanto, `npm run dev` alcanza para aprender.
+
+---
+
+## Mapa: qué servicio emula qué
+
+| Servicio en WAHH | Servicio real de AWS | Para qué sirve en la vida real |
+|------------------|----------------------|--------------------------------|
+| **S3-like** (`s3`) | Amazon S3 | Almacenamiento de objetos (archivos, backups, sitios estáticos) |
+| **Store** (`store`) | Amazon DynamoDB | Base de datos NoSQL clave-valor / documentos |
+| **IAM** (`iam`) | AWS IAM | Identidad y acceso: usuarios, roles y permisos |
+| **EC2** (`ec2`) | Amazon EC2 | Máquinas virtuales (servidores) con ciclo de vida |
+| **Lambda** (`lambda`) | AWS Lambda | Funciones que se ejecutan ante un evento, sin servidor |
+
+Cada servicio tiene su propia pestaña en la UI. La lógica de cada uno vive en
+`src/services/<id>/`, aislada y testeada.
+
+---
+
+## Cómo aprender con WAHH
+
+1. Abrí la UI y tocá cada pestaña: creá un bucket, una tabla, un usuario, una
+   función, una instancia.
+2. Leé `docs/tutorial.md`: explica cada servicio y trae **ejercicios
+   progresivos**.
+3. Cada ejercicio tiene un `*.test.js` stub en `docs/exercises/` que vos
+   completás y verificás con:
+
+   ```bash
+   npm run test
+   ```
+
+   Si los tests pasan, tu solución está bien. Es TDD al revés: el test ya está,
+   vos escribís el código que lo satisface.
+
+---
+
+## Estructura del proyecto
+
+```
+src/
+  core/         storage + registry (infra base, no tocar)
+  services/     s3 · store · iam · lambda · ec2   (la lógica de AWS)
+    <id>/index.js   catálogo del servicio (id, nombre, clase, vista)
+  ui/           shell con tabs + helper de vista + vistas por servicio
+index.html      punto de entrada (se abre en el navegador)
+docs/           diseño + tutorial pedagógico
+```
+
+---
+
+## Tests
 
 ```bash
-npm test           # corre la suite (vitest run)
-npm run verify     # hermes verify: valida TDD y convenciones
+npm run test      # corre todos los tests (Vitest)
 ```
 
-Ejemplo de uso de la API en memoria (ver `src/`):
-
-```js
-import { createBucket } from './src/services/s3/s3.js';
-const bucket = createBucket('mi-bucket');
-```
-
-## Arquitectura y diagramas
-
-Estructura actual (`src/`):
-- `core/` — `registry.js` (registro de servicios), `storage.js` (persistencia localStorage).
-- `services/s3/` — emulación de S3.
-- `services/store/` — store de objetos.
-- `ui/app.js` — capa de interfaz.
-
-Los **diagramas de flujo/mecanismo** los genera Cy en [`diagramas/`](diagramas/) (mermaid `.mmd` / JSON Canvas de Obsidian). Una figura = una afirmación. Se ven en Obsidian o se renderizan desde el vault.
-
-## Contribuir
-
-Leer [CONTRIBUTING.md](CONTRIBUTING.md). Resumen:
-- Commits conversacionales con scope: `feat(waah): ...`, `fix(waah): ...`, `docs(waah): ...`
-- TDD obligatorio (Vitest), verificar con `npm run verify`.
-- JSDoc/TSDoc en todo símbolo público (ver [`docs/CODE-DOCUMENTATION.md`](docs/CODE-DOCUMENTATION.md)).
-
-## Licencia
-
-[MIT](LICENSE) © nedder3
+75 tests verdes cubren la lógica de los 5 servicios, el storage, el registry y
+la UI. No hace falta saber testing para usar WAHH, pero si querés contribuir,
+el flujo es TDD: test primero, luego código.
