@@ -1,5 +1,7 @@
 # WHAAH — *We Have AWS At Home*
 
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ![WHAAH — We Have AWS At Home](docs/banner.png)
 
 > Un emulador de servicios de AWS que corre **100% en tu navegador**, sin servidor, sin Docker y sin tarjeta de crédito. Pensado para aprender AWS tocando los conceptos de verdad, no solo leyendo.
@@ -101,6 +103,17 @@ docs/           diseño + tutorial pedagógico
 npm run test      # corre todos los tests (Vitest)
 ```
 
-75 tests verdes cubren la lógica de los 5 servicios, el storage, el registry y
-la UI. No hace falta saber testing para usar WAHH, pero si querés contribuir,
+90 tests verdes cubren la lógica de los 5 servicios, el storage, el registry y
+la UI. No hace falta saber testing para usar WHAAH, pero si querés contribuir,
 el flujo es TDD: test primero, luego código.
+
+---
+
+## Inspiración y atribución
+
+**WHAAH** es una reimplementación didáctica en JavaScript del concepto de
+[floci](https://github.com/floci-io/floci) (emulador local de AWS, licencia MIT),
+hecha para correr 100% en el navegador sin Docker. No se copió su código: es una
+reinterpretación del concepto en un stack client-side.
+
+Creado por **nedder3 (Ariel Jaime)**. Licencia [MIT](LICENSE).
