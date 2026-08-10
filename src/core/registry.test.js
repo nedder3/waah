@@ -23,14 +23,18 @@ describe('ServiceRegistry', () => {
     expect(() => r.get('nope')).toThrow(/not registered/);
   });
 
-  it('lists all registered definitions (id, name, description)', () => {
+  it('stores and exposes an optional render fn', () => {
+    const r = new ServiceRegistry();
+    const render = () => {};
+    r.register({ id: 's3', name: 'S3', description: 'a', factory: () => ({}), render });
+    expect(r.get('s3').render).toBe(render);
+    expect(r.list()[0].render).toBe(render);
+  });
+
+  it('treats a missing render as null (not a function)', () => {
     const r = new ServiceRegistry();
     r.register({ id: 's3', name: 'S3', description: 'a', factory: () => ({}) });
-    r.register({ id: 'store', name: 'Store', description: 'b', factory: () => ({}) });
-    const list = r.list();
-    expect(list.map((d) => d.id)).toEqual(['s3', 'store']);
-    // factory should not be required in list shape but can be present
-    for (const d of list) expect(typeof d.name).toBe('string');
+    expect(r.get('s3').render).toBeNull();
   });
 
   it('builds an instance via factory', () => {

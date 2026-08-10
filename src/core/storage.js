@@ -71,14 +71,14 @@ export class LocalStorageAdapter {
     const out = [];
     for (let i = 0; i < this._backend.length; i++) {
       const k = this._backend.key(i);
-      if (k && k.startsWith(full)) out.push(k);
+      if (k && k.startsWith(full)) out.push(k.slice(this._ns.length + 1));
     }
     return out;
   }
 
   clear() {
     const owned = this.keys();
-    for (const k of owned) this._backend.removeItem(k);
+    for (const k of owned) this._backend.removeItem(this._key(k));
   }
 }
 

@@ -68,7 +68,7 @@ describe('LocalStorageAdapter', () => {
     const a = new LocalStorageAdapter('ns', new FakeLocalStorage());
     a.set('a', '1');
     a.set('b', '2');
-    expect(a.keys().sort()).toEqual(['ns:a', 'ns:b']);
+    expect(a.keys().sort()).toEqual(['a', 'b']);
   });
 });
 

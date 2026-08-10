@@ -1,5 +1,4 @@
 // Entry point: wires storage + registry + services + views.
-import { createAdapter } from './core/storage.js';
 import { ServiceRegistry } from './core/registry.js';
 import { S3Service } from './services/s3/s3.js';
 import { StoreService } from './services/store/store.js';
@@ -23,25 +22,15 @@ function bind(id, name, description, ServiceClass, render) {
     name,
     description,
     factory: (adapter) => new ServiceClass(adapter),
+    render,
   });
-  // Keep render alongside the instance; the registry intentionally stores only
-  // service metadata, not UI concerns.
-  renders[id] = render;
 }
 
-const renders = {};
 bind('s3', 'S3-like', 'Buckets y objetos', S3Service, renderS3View);
 bind('store', 'Store', 'Tablas key-value (Dynamo-like)', StoreService, renderStoreView);
 bind('iam', 'IAM', 'Usuarios, roles y policies', IamService, renderIamView);
 bind('lambda', 'Lambda', 'Funciones y ejecución', LambdaService, renderLambdaView);
 bind('ec2', 'EC2', 'Instancias virtuales', Ec2Service, renderEc2View);
 
-// Build instance map: each service gets its own storage namespace.
-const services = {};
-for (const def of registry.list()) {
-  const adapter = createAdapter(def.id);
-  services[def.id] = { instance: registry.create(def.id, adapter), render: renders[def.id] };
-}
-
 const root = document.getElementById('app');
-mountApp(root, { registry, services });
+mountApp(root, { registry });

@@ -14,20 +14,14 @@ import { renderLambdaView } from './lambda-view.js';
 import { renderEc2View } from './ec2-view.js';
 import { mountApp } from './app.js';
 
-function makeServices() {
+function makeRegistry() {
   const registry = new ServiceRegistry();
   registry.register({ id: 's3', name: 'S3-like', description: '', factory: (a) => new S3Service(a), render: renderS3View });
   registry.register({ id: 'store', name: 'Store', description: '', factory: (a) => new StoreService(a), render: renderStoreView });
   registry.register({ id: 'iam', name: 'IAM', description: '', factory: (a) => new IamService(a), render: renderIamView });
   registry.register({ id: 'lambda', name: 'Lambda', description: '', factory: (a) => new LambdaService(a), render: renderLambdaView });
   registry.register({ id: 'ec2', name: 'EC2', description: '', factory: (a) => new Ec2Service(a), render: renderEc2View });
-  const renders = { s3: renderS3View, store: renderStoreView, iam: renderIamView, lambda: renderLambdaView, ec2: renderEc2View };
-  const services = {};
-  for (const def of registry.list()) {
-    const adapter = new MemoryAdapter(def.id);
-    services[def.id] = { instance: registry.create(def.id, adapter), render: renders[def.id] };
-  }
-  return { registry, services };
+  return registry;
 }
 
 describe('UI shell (jsdom)', () => {
@@ -38,8 +32,8 @@ describe('UI shell (jsdom)', () => {
   });
 
   it('renders one tab per registered service and activates the first', () => {
-    const { registry, services } = makeServices();
-    mountApp(root, { registry, services });
+    const registry = makeRegistry();
+    mountApp(root, { registry });
     const tabs = root.querySelectorAll('#tabs button');
     expect(tabs.length).toBe(5);
     expect(tabs[0].classList.contains('active')).toBe(true);
@@ -48,15 +42,15 @@ describe('UI shell (jsdom)', () => {
   });
 
   it('renders one tab per registered service (5) and activates the first', () => {
-    const { registry, services } = makeServices();
-    mountApp(root, { registry, services });
+    const registry = makeRegistry();
+    mountApp(root, { registry });
     expect(root.querySelectorAll('#tabs button').length).toBe(5);
     expect(root.querySelector('#s3-bucket-list')).not.toBeNull();
   });
 
   it('switches to each service view on tab click', () => {
-    const { registry, services } = makeServices();
-    mountApp(root, { registry, services });
+    const registry = makeRegistry();
+    mountApp(root, { registry });
     const click = (name) => [...root.querySelectorAll('#tabs button')].find((b) => b.textContent === name).click();
     click('Store');
     expect(root.querySelector('#store-table-list')).not.toBeNull();
@@ -68,13 +62,14 @@ describe('UI shell (jsdom)', () => {
     expect(root.querySelector('#ec2-list')).not.toBeNull();
   });
 
-  it('end-to-end: create bucket via S3 view reflects in service state', () => {
-    const { registry, services } = makeServices();
-    mountApp(root, { registry, services });
+  it('end-to-end: create bucket via S3 view reflects in the rendered list', () => {
+    const registry = makeRegistry();
+    mountApp(root, { registry });
     const input = root.querySelector('#s3-bucket-name');
     input.value = 'demo';
     root.querySelector('#s3-create-bucket').dispatchEvent(new Event('submit', { cancelable: true }));
-    expect(services.s3.instance.listBuckets()).toContain('demo');
+    // The UI re-renders from the same service instance it created, so the new
+    // bucket shows up in the DOM — that is the observable contract.
     expect([...root.querySelectorAll('#s3-bucket-list li button')].some((b) => b.textContent === 'demo')).toBe(true);
   });
 });

@@ -21,6 +21,7 @@ export class ServiceRegistry {
       name: definition.name || definition.id,
       description: definition.description || '',
       factory: definition.factory,
+      render: typeof definition.render === 'function' ? definition.render : null,
     });
   }
 
@@ -31,7 +32,7 @@ export class ServiceRegistry {
   }
 
   list() {
-    return [...this._services.values()].map(({ id, name, description }) => ({ id, name, description }));
+    return [...this._services.values()].map(({ id, name, description, render }) => ({ id, name, description, render }));
   }
 
   create(id, ...args) {

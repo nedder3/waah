@@ -25,10 +25,12 @@ Todos los servicios son clases puras sobre `StorageAdapter` y se registran en
 `main.js` con su vista. La UI es un shell con tabs.
 
 ## Arquitectura de UI
-- `app.js` es un **shell con tabs**: un tab por servicio registrado; cada servicio
-  aporta su propia vista (`*-view.js`). El shell solo maneja el switch de tabs.
-- `main.js` registra servicios (factory + namespace de storage) y sus vistas; no
-  hay lógica de servicio en la UI.
+- `app.js` es un **shell con tabs** que NO conoce servicios específicos: lee
+  `registry.list()` para pintar un tab por servicio y `registry.create(id, adapter)`
+  + `def.render` para montar la vista. Añadir un servicio = registrarlo en
+  `main.js`; la UI lo toma sola. El `ServiceRegistry` es la única fuente.
+- `main.js` registra servicios (factory + namespace de storage + `render`) en el
+  registry; ya no hay mapas paralelos de instancias ni de vistas.
 - Cada vista es la única que toca el DOM de su servicio; los servicios siguen
   siendo clases puras y testeables sin navegador.
 
