@@ -46,4 +46,4 @@ Todos los servicios son clases puras sobre `StorageAdapter` y se registran en
 - Tests con Vitest (`npx vitest run`).
 - `hermes verify` como pasada de humo (detecta build/test/start y levanta el
   server estático).
-- Commits `feat(waah): ...` solo cuando `hermes verify` es verde.
+- Commits `feat(whaah): ...` solo cuando `hermes verify` es verde.

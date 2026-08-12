@@ -7,10 +7,10 @@ Reglas para contribuir a este proyecto (aplica a Cy y a humanos).
 Formato [Conventional Commits](https://www.conventionalcommits.org/) con **scope** del proyecto:
 
 ```
-feat(waah): agregar simulación de S3
-fix(waah): corregir parseo de credenciales
-docs(waah): actualizar README
-test(waah): cubrir edge case de cola SQS
+feat(whaah): agregar simulación de S3
+fix(whaah): corregir parseo de credenciales
+docs(whaah): actualizar README
+test(whaah): cubrir edge case de cola SQS
 chore: actualizar dependencias
 ```
 
