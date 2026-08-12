@@ -117,3 +117,25 @@ hecha para correr 100% en el navegador sin Docker. No se copió su código: es u
 reinterpretación del concepto en un stack client-side.
 
 Creado por **nedder3 (Ariel Jaime)**. Licencia [MIT](LICENSE).
+
+---
+
+## Diagrama de mecanismo
+
+```mermaid
+flowchart TD
+  U[Usuario en navegador] -->|click tab / submit| SHELL[UI app.js: shell con tabs]
+  SHELL -->|registry.list() enumera servicios| REG[ServiceRegistry: única fuente]
+  REG -->|registry.create id, adapter| SVC[S3/Store/IAM/Lambda/EC2: lógica pura]
+  SVC -->|assert / put| AD[StorageAdapter: interfaz]
+  AD -->|LocalStorageAdapter runtime| LS[(localStorage: ns:<id>:...)]
+  AD -->|MemoryAdapter tests| MEM[(Map en memoria)]
+  SVC -->|retorna resultado| VIEW[vista: s3-view / store-view / ...]
+  VIEW -->|render listas / log| U
+
+  subgraph despliegue[GitHub Pages]
+    STATIC[index.html + src/*.js ESM] -->|sin build| BROWSER[navegador carga módulos]
+  end
+  BROWSER --> U
+```
+
