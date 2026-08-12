@@ -22,10 +22,10 @@ describe('MemoryAdapter', () => {
 
   it('lists keys with optional prefix', () => {
     const a = new MemoryAdapter();
-    a.set('waah:one', '1');
-    a.set('waah:two', '2');
+    a.set('whaah:one', '1');
+    a.set('whaah:two', '2');
     a.set('other:three', '3');
-    expect(a.keys('waah:').sort()).toEqual(['waah:one', 'waah:two']);
+    expect(a.keys('whaah:').sort()).toEqual(['whaah:one', 'whaah:two']);
   });
 
   it('clears all keys', () => {
