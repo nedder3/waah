@@ -15,7 +15,7 @@ corriendo bases de datos (DynamoDB), máquinas virtuales (EC2), funciones que
 responden a eventos (Lambda) y controlás quién puede hacer qué (IAM).
 
 El problema para quien arranca: abrir una cuenta real implica configurar
-facturación, regiones, roles y mucho jargon. **WAHH te deja practicar la
+facturación, regiones, roles y mucho jargon. **WHAAH te deja practicar la
 *forma de pensar* de AWS** — buckets, tablas, instancias, funciones, permisos —
 en una maqueta client-side que vive en tu propio navegador.
 
@@ -25,7 +25,7 @@ puro y la "persistencia" es tu `localStorage`.
 
 ---
 
-## Cómo correr WAHH sin Docker
+## Cómo correr WHAAH sin Docker
 
 No necesitás Docker ni nada instalado para lo básico:
 
@@ -52,7 +52,7 @@ todo corre y se guarda en tu navegador.
 
 ## Mapa: qué servicio emula qué
 
-| Servicio en WAHH | Servicio real de AWS | Para qué sirve en la vida real |
+| Servicio en WHAAH | Servicio real de AWS | Para qué sirve en la vida real |
 |------------------|----------------------|--------------------------------|
 | **S3-like** (`s3`) | Amazon S3 | Almacenamiento de objetos (archivos, backups, sitios estáticos) |
 | **Store** (`store`) | Amazon DynamoDB | Base de datos NoSQL clave-valor / documentos |
@@ -65,7 +65,7 @@ Cada servicio tiene su propia pestaña en la UI. La lógica de cada uno vive en
 
 ---
 
-## Cómo aprender con WAHH
+## Cómo aprender con WHAAH
 
 1. Abrí la UI y tocá cada pestaña: creá un bucket, una tabla, un usuario, una
    función, una instancia.

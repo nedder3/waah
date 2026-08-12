@@ -1,4 +1,4 @@
-// Service registry: single source of truth for which AWS-like services WAHH emulates.
+// Service registry: single source of truth for which AWS-like services WHAAH emulates.
 // The UI and docs enumerate this instead of hardcoding service lists.
 
 export class ServiceRegistry {

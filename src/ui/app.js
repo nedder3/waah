@@ -6,7 +6,7 @@ import { createAdapter } from '../core/storage.js';
 export function mountApp(root, { registry }) {
   root.innerHTML = `
     <header>
-      <h1>WAHH <small>We Have AWS At Home</small></h1>
+      <h1>WHAAH <small>We Have AWS At Home</small></h1>
     </header>
     <nav id="tabs"></nav>
     <main id="view"></main>

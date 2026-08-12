@@ -1,4 +1,4 @@
-# WAHH — Notas de diseño
+# WHAAH — Notas de diseño
 
 Prototipo client-side que emula servicios de AWS en el navegador, deploy en
 GitHub Pages, sin backend ni build.

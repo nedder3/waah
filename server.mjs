@@ -43,5 +43,5 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`WAHH dev server on http://localhost:${PORT}`);
+  console.log(`WHAAH dev server on http://localhost:${PORT}`);
 });

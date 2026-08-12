@@ -1,4 +1,4 @@
-// Storage abstraction for WAHH.
+// Storage abstraction for WHAAH.
 //
 // Services MUST NOT touch localStorage directly. They receive a StorageAdapter
 // and persist serialized strings. At runtime we use LocalStorageAdapter (browser);
